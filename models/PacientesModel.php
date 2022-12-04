@@ -5,7 +5,6 @@ require "./models/conection.php";
 class PacientesModel
 {
   private $_db;
-  // private $list;
 
   public function __construct()
   {
@@ -23,8 +22,20 @@ class PacientesModel
   public function searchAll($condicion)
   {
     $this->_db->conectar();
-    $consult = $this->_db->conexion->prepare("SELECT * FROM  paciente WHERE " . $condicion);
+    $consult = $this->_db->conexion->prepare("
+      SELECT paciente.id, paciente.carnet, paciente.nombre, paciente.correo, paciente.telefono, categoria.nombre as categoria
+      FROM paciente, categoria 
+      WHERE paciente.categoria_id = categoria.id and " . $condicion);
     $consult->execute();
+    return $consult->fetchAll(PDO::FETCH_OBJ);
+  }
+
+  public function listCategorias()
+  {
+    $this->_db->conectar();
+    $consult = $this->_db->conexion->prepare("SELECT * FROM categoria WHERE is_active=true");
+    $consult->execute();
+    $this->_db->desconectar();
     return $consult->fetchAll(PDO::FETCH_OBJ);
   }
 
@@ -32,26 +43,19 @@ class PacientesModel
   {
     $this->_db->conectar();
     $consult = $this->_db->conexion->query(
-      "INSERT paciente ( carnet, name, email, telefono) 
+      "INSERT paciente (carnet, nombre, correo, telefono, categoria_id) 
       VALUES (" . $data . ")"
     );
     $this->_db->desconectar();
-    if ($consult) {
-      return true;
-    } else {
-      return false;
-    }
+    return $consult ? true : false;
   }
 
-  public function  update($data, $condicion)
+  public function update($data, $condicion)
   {
     $this->_db->conectar();
     $consult = $this->_db->conexion->query("UPDATE paciente SET " . $data . " WHERE " . $condicion);
-    if ($consult) {
-      return true;
-    } else {
-      return false;
-    }
+    $this->_db->desconectar();
+    return $consult ? true : false;
   }
 
   public function delete($condicion)
@@ -59,10 +63,6 @@ class PacientesModel
     $this->_db->conectar();
     $consult = $this->_db->conexion->query("DELETE FROM paciente WHERE " . $condicion);
     $this->_db->desconectar();
-    if ($consult) {
-      return true;
-    } else {
-      return false;
-    }
+    return $consult ? true : false;
   }
 }
